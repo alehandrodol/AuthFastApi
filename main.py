@@ -53,17 +53,23 @@ def get_username_from_signed(signed: str) -> Optional[str]:
     return None
 
 
+def gener_html(path: str):
+    if path == "/":
+        with open("./templates/index.html", "r") as html:
+            index = html.read()
+        return index
+
+
 @app.get("/")
 def index_page(username: Optional[str] = Cookie(default=None)):
-    with open("./templates/index.html", "r") as html:
-        index = html.read()
+    page = gener_html("/")
     if not username:
-        return Response(index, media_type="text/html")
+        return Response(page, media_type="text/html")
     valid_username = get_username_from_signed(username)
     try:
         user = users[valid_username]
     except KeyError:
-        res = Response(index, media_type="text/html")
+        res = Response(page, media_type="text/html")
         res.delete_cookie("username")
         return res
     return Response(f"Здравствуйте, {user['name']}, ваш баланс {user['balance']}, "
@@ -90,3 +96,8 @@ def process_login_page(username: str = Form(...), password: str = Form(...)):
         cookie = f"{base64.b64encode(username.encode()).decode()}.{sign_data(username)}"
         response.set_cookie(key="username", value=cookie)
         return response
+
+
+@app.get("/items/{item_id}")
+def read_item(item_id: int, item_id2: int, q: Optional[str] = None):
+    return {"item_id": item_id, "item_id2": item_id2, "q": q}
